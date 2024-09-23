@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: laravel_app
     volumes:
-      - .:/var/www/laraveldocker
+      - .:/var/www/wgbackup
     ports:
       - "9000:9000"
     networks:
@@ -44,3 +44,5 @@ networks:
 volumes:
   mysql_data:
   driver: local
+
+  
