@@ -1,38 +1,39 @@
-# Base image for Laravel
+# Gunakan base image PHP dan Nginx
 FROM php:8.1-fpm
 
-# Set working directory
-WORKDIR /var/www/html
+# Setel direktori kerja
+WORKDIR /var/www
 
-# Install dependencies
+# Salin semua file ke dalam container
+COPY . .
+
+# Install dependensi PHP
 RUN apt-get update && apt-get install -y \
-    build-essential \
     libpng-dev \
-    libjpeg-dev \
+    libjpeg62-turbo-dev \
     libfreetype6-dev \
-    locales \
+    libzip-dev \
     zip \
-    jpegoptim optipng pngquant gifsicle \
-    vim \
     unzip \
-    git \
-    curl
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install gd \
+    && docker-php-ext-install zip pdo pdo_mysql
 
-# Clear cache
-RUN apt-get clean && rm -rf /var/lib/apt/lists/*
+# Install Composer
+COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
-# Install PHP extensions
-RUN docker-php-ext-install pdo_mysql mbstring exif pcntl bcmath gd
+# Install dependensi Laravel
+RUN composer install --optimize-autoloader --no-dev
 
-# Copy existing application directory contents
-COPY . /var/www/html
+# Salin konfigurasi Nginx
+COPY nginx/nginx.conf /etc/nginx/nginx.conf
 
-# Copy existing application directory permissions
-COPY --chown=www-data:www-data . /var/www/html
+# Set permissions
+RUN chown -R www-data:www-data /var/www \
+    && chmod -R 755 /var/www
 
-# Change current user to www
-USER www-data
+# Expose port 80
+EXPOSE 80
 
-# Expose port 9000 and start php-fpm server
-EXPOSE 9000
+# Start PHP-FPM dan Nginx
 CMD ["php-fpm"]
